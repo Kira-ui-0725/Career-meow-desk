@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="微笑的猫猫头">
+  <rect width="64" height="64" rx="16" fill="#e8f3ed"/>
+  <path d="M12 27 15 12 27 20Q32 18 37 20L49 12 52 27Q55 36 50 44Q44 53 32 53Q20 53 14 44Q9 36 12 27Z" fill="#fffaf4" stroke="#31443e" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m17 17 2 8 6-4ZM47 17l-2 8-6-4Z" fill="#efb9aa"/>
+  <circle cx="24" cy="33" r="2.5" fill="#31443e"/>
+  <circle cx="40" cy="33" r="2.5" fill="#31443e"/>
+  <circle cx="18" cy="39" r="3.5" fill="#f6d8d0"/>
+  <circle cx="46" cy="39" r="3.5" fill="#f6d8d0"/>
+  <path d="m29 39 3 2 3-2Z" fill="#d98f88"/>
+  <path d="M32 41v2m0 0q-3 4-6 0m6 0q3 4 6 0" fill="none" stroke="#31443e" stroke-width="2" stroke-linecap="round"/>
+</svg>

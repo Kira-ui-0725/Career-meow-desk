@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f5">
+  <meta name="description" content="求职喵务局：管理岗位投递、笔试面试和每日安排，支持本地排程与可选 AI 草案。">
+  <title>求职喵务局</title>
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./plan-text.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#today" aria-label="求职喵务局首页"><img class="brand-mark" src="./favicon.svg" alt="" width="38" height="38"><span>求职喵务局<small>CAREER MEOW DESK</small></span></a>
+      <nav class="nav" aria-label="主导航">
+        <button class="nav-item active" data-view="today" type="button"><span>◫</span> 今日总览</button>
+        <button class="nav-item" data-view="jobs" type="button"><span>▦</span> 岗位投递</button>
+        <button class="nav-item" data-view="events" type="button"><span>◷</span> 笔试面试</button>
+        <button class="nav-item" data-view="plan" type="button"><span>▤</span> 每日安排</button>
+      </nav>
+      <div class="sidebar-note"><button class="sidebar-note-edit" id="edit-sidebar-note" type="button" aria-label="编辑侧栏文字">编辑</button><strong id="sidebar-note-title">轻装推进，每天向前。</strong><p id="sidebar-note-body">记录机会、守住时间，也给休息留位置。</p></div>
+      <div class="sidebar-foot">个人使用 · 点击右上角保存到本地</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="topbar-left"><img class="topbar-logo" src="./favicon.svg" alt="" width="29" height="29"><span class="eyebrow">PERSONAL SEARCH DESK</span><span id="top-date"></span></div>
+        <div class="top-actions"><span class="save-status" id="save-status" role="status">已保存在本机</span><button class="btn btn-primary" id="save-local" type="button">保存到本地</button><button class="btn btn-secondary login-entry" id="login-entry" type="button" data-oai-siwc-button disabled title="请用 http://127.0.0.1:4173 打开本地版">使用 ChatGPT 登录</button></div>
+      </header>
+
+      <section class="view active" id="view-today" aria-labelledby="today-title">
+        <div class="hero"><div class="hero-copy"><div class="hero-kicker" id="hero-kicker">YOUR CAREER DESK</div><h1 id="today-title">今天，稳稳向前。</h1><p id="hero-description">先处理有明确时间的事，再安排投递、复盘和休息。</p></div><button class="hero-edit" id="edit-hero" type="button" aria-label="编辑顶部文字">编辑文字</button><div class="hero-date" id="hero-date"></div></div>
+        <div class="stats" id="stats"></div>
+        <div class="dashboard-grid">
+          <section class="card attention-card"><div class="section-head"><div><span class="section-kicker">DON'T MISS</span><h2>需要留意</h2></div><button class="text-btn" data-view="events" type="button">查看全部 →</button></div><div id="attention-list"></div></section>
+          <section class="card"><div class="section-head"><div><span class="section-kicker">TODAY'S TO-DO</span><h2>今日待办</h2></div><button class="text-btn" data-open="task" type="button">＋ 添加待办</button></div><div id="today-tasks"></div></section>
+        </div>
+        <section class="card next-card"><div class="section-head"><div><span class="section-kicker">TOMORROW'S MOVES</span><h2>明日跟进</h2></div><button class="text-btn" data-open="followup" type="button">＋ 安排明日跟进</button></div><div id="tomorrow-actions"></div></section>
+        <p class="inline-note">页面内提醒仅在此网页打开时显示；关闭页面后不会主动通知。手机和电脑的数据不会自动同步。</p>
+      </section>
+
+      <section class="view" id="view-jobs" aria-labelledby="jobs-title">
+        <div class="page-heading"><div><span class="section-kicker">OPPORTUNITY PIPELINE</span><h1 id="jobs-title">岗位投递</h1><p>把每个机会和下一步放在一起。</p></div><button class="btn btn-primary" data-open="job" type="button">＋ 新增岗位</button></div>
+        <div class="toolbar"><label class="search-wrap"><span class="sr-only">搜索岗位</span><input id="job-search" type="search" placeholder="搜索公司或岗位"></label><label class="select-wrap"><span class="sr-only">筛选状态</span><select id="job-filter"><option value="all">全部状态</option><option value="收藏">收藏</option><option value="待投递">待投递</option><option value="已投递">已投递</option><option value="笔试中">笔试中</option><option value="面试中">面试中</option><option value="已结束">已结束</option></select></label></div>
+        <div id="job-list" class="stack"></div>
+      </section>
+
+      <section class="view" id="view-events" aria-labelledby="events-title">
+        <div class="page-heading"><div><span class="section-kicker">DATES THAT MATTER</span><h1 id="events-title">面试与笔试</h1><p>先记下安排与准备资料，具体时间可稍后补充。</p></div><button class="btn btn-primary" data-open="event" type="button">＋ 添加事件</button></div>
+        <div id="event-list" class="stack"></div>
+      </section>
+
+      <section class="view" id="view-plan" aria-labelledby="plan-title">
+        <div class="page-heading"><div><span class="section-kicker">MAKE ROOM FOR LIFE</span><h1 id="plan-title">日程安排</h1><p>按天或按周查看投递、学习、运动和休息时间。</p></div><button class="btn btn-primary" data-open="block" type="button">＋ 安排时间</button></div>
+        <div class="toolbar plan-toolbar"><div class="view-switch" role="group" aria-label="日程视图"><button id="plan-day-view" type="button" aria-pressed="true">日</button><button id="plan-week-view" type="button" aria-pressed="false">周</button></div><button class="date-step" id="plan-prev" type="button" aria-label="前一天">‹</button><label class="date-wrap">选择日期 <input id="plan-date" type="date"></label><button class="date-step" id="plan-next" type="button" aria-label="后一天">›</button><button class="btn btn-secondary" id="back-today" type="button">回到今天</button><div class="toolbar-hint" id="plan-summary"></div></div>
+        <section class="card week-panel" id="week-panel" aria-label="本周时间表" hidden><div class="schedule-head"><div><span class="section-kicker">WEEKLY TIMELINE</span><h2>本周时间表</h2><p id="week-range"></p></div><div class="schedule-legend"><span><i class="legend-dot"></i>时间安排</span><span><i class="legend-dot fixed"></i>笔试面试</span></div></div><p class="week-swipe-hint">左右滑动查看其他日期 →</p><div class="week-scroll"><div id="week-calendar" class="week-calendar" aria-live="polite"></div></div></section>
+        <div class="plan-workspace" id="plan-workspace">
+          <section class="card schedule-panel" aria-labelledby="timeline-title"><div class="schedule-head"><div><span class="section-kicker">DAILY PLAN</span><h2 id="timeline-title">时间表</h2><p>拖动六点手柄可调整时间；遇到普通安排会自动顺延，笔试面试时间保持固定。手机可先点手柄，再点时间段。</p></div><div class="schedule-legend"><span><i class="legend-dot"></i>时间安排</span><span><i class="legend-dot fixed"></i>笔试面试</span></div></div><div id="block-list" class="course-timetable" aria-live="polite"></div></section>
+          <section class="card quick-plan"><div class="section-head"><div><span class="section-kicker">QUICK PLAN</span><h2>一句话安排日程</h2></div><button class="quick-plan-toggle btn btn-secondary" id="quick-plan-toggle" type="button" aria-controls="quick-plan-body" aria-expanded="false">展开输入</button></div><div id="quick-plan-body"><p>写下事项和预计时长。本地拆分会自动放入左侧时间表，之后可拖动调整。</p><label class="sr-only" for="quick-plan-input">输入要安排的事项</label><textarea id="quick-plan-input" maxlength="2000"></textarea><div class="chatgpt-tools" id="chatgpt-tools" hidden><div class="chatgpt-tools-head"><strong>使用 ChatGPT 订阅</strong><a href="https://chatgpt.com/settings/usage" target="_blank" rel="noopener noreferrer">管理用量 ↗</a></div><p id="chatgpt-status">正在检查连接…</p><label class="chatgpt-model-wrap" id="chatgpt-model-wrap" hidden>可用模型<select id="chatgpt-model"></select></label><button class="btn btn-primary" id="chatgpt-generate" type="button" disabled>用 ChatGPT 生成草案</button></div><div class="alternate-ai"><strong>其他 AI 服务</strong><div class="ai-config"><label>我的 AI 服务地址<input id="ai-endpoint" type="url" placeholder="https://你的服务地址" autocomplete="url"></label><label>访问码（本页使用，不保存）<input id="ai-access-code" type="password" autocomplete="off" placeholder="服务端设置的访问码"></label></div></div><div class="quick-plan-actions"><div class="plan-generate-actions"><button class="btn btn-secondary" id="quick-plan-generate" type="button">本地拆分</button><button class="btn btn-secondary" id="ai-plan-generate" type="button">其他 AI 生成</button></div></div><div id="quick-plan-preview" class="plan-preview" hidden></div></div></section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <dialog id="editor" class="editor"><form id="editor-form"><div class="dialog-head"><div><span class="section-kicker" id="dialog-kicker">NEW ENTRY</span><h2 id="dialog-title">新增</h2></div><button class="icon-btn" type="button" id="close-dialog" aria-label="关闭">×</button></div><div id="dialog-fields" class="form-grid"></div><div class="dialog-actions"><button class="btn btn-secondary" type="button" id="cancel-dialog">取消</button><button class="btn btn-primary" type="submit">完成编辑</button></div></form></dialog>
+  <dialog id="sidebar-note-editor" class="editor"><form id="sidebar-note-form"><div class="dialog-head"><div><span class="section-kicker">PERSONAL NOTE</span><h2>编辑侧栏文字</h2></div><button class="icon-btn" id="close-sidebar-note" type="button" aria-label="关闭">×</button></div><div class="form-grid"><label class="field full">标题<input id="sidebar-note-title-input" type="text" maxlength="80" required></label><label class="field full">内容<textarea id="sidebar-note-body-input" maxlength="300" required></textarea></label></div><div class="dialog-actions"><button class="btn btn-secondary" id="cancel-sidebar-note" type="button">取消</button><button class="btn btn-primary" type="submit">完成编辑</button></div></form></dialog>
+  <dialog id="hero-editor" class="editor"><form id="hero-form"><div class="dialog-head"><div><span class="section-kicker">TODAY'S PAGE</span><h2>编辑顶部文字</h2></div><button class="icon-btn" id="close-hero-editor" type="button" aria-label="关闭">×</button></div><div class="form-grid"><label class="field full">英文小标题<input id="hero-kicker-input" type="text" maxlength="60" required></label><label class="field full">主标题<input id="hero-title-input" type="text" maxlength="80" required></label><label class="field full">说明文字<textarea id="hero-description-input" maxlength="300" required></textarea></label></div><div class="dialog-actions"><button class="btn btn-secondary" id="cancel-hero-editor" type="button">取消</button><button class="btn btn-primary" type="submit">完成编辑</button></div></form></dialog>
+</body>
+</html>
