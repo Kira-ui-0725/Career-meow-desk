@@ -1,0 +1,11 @@
+# Personal exports must not enter a public repository.
+*备份*.json
+data/
+.env
+.env.*
+!.env.example
+node_modules/
+.DS_Store
+# Internal planning and agent instructions are not part of the public release.
+docs/
+AGENTS.md
