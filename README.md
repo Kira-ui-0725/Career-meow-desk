@@ -4,6 +4,8 @@
 
 **在一张网页里整理岗位投递、笔试面试与每日安排。**
 
+[在线体验](https://kira-ui-0725.github.io/Career-meow-desk/) · [GitHub 仓库](https://github.com/Kira-ui-0725/Career-meow-desk)
+
 ![Static Site](https://img.shields.io/badge/Website-Static%20HTML%2FCSS%2FJS-2F4F4F?style=for-the-badge)
 ![Local Data](https://img.shields.io/badge/Data-Browser%20Local-7B9278?style=for-the-badge)
 
@@ -20,7 +22,7 @@
 - ✅ 用户主动点击“保存到本地”后，才把填写内容写入当前浏览器。
 - ⚙️ 可选择在各自电脑运行本地 ChatGPT 服务，或连接自己部署的兼容模型接口。
 
-> **当前状态：**静态网页与本地规则可用；GitHub Pages 公网部署、真实 ChatGPT 账号授权和真实模型生成尚未完成验证。公开网页上的 ChatGPT 登录目前不可用。
+> **当前状态：**静态网页已在 GitHub Pages 上线，本地规则可用；真实 ChatGPT 账号授权和真实模型生成尚未完成验证。公开网页上的 ChatGPT 登录目前不可用。
 
 ---
 
@@ -143,6 +145,5 @@ Career-meow-desk/
 
 目前按建仓时的选择**不添加许可证**，因此这里没有沿用参考项目的使用限制。如希望明确允许他人复用代码，可以之后再选许可证。其他待补充内容：
 
-- GitHub Pages 部署并验证后，在 README 顶部加入在线体验地址。
 - 若决定开放代码复用，新增 `LICENSE` 文件后再添加许可证徽章。
-- 完成一次公开网址上的桌面与手机操作检查；若提供 AI 功能，再单独验证真实授权或模型请求。
+- 完成公开网址上的桌面与手机实际操作检查；若提供 AI 功能，再单独验证真实授权或模型请求。
