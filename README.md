@@ -47,8 +47,7 @@
 - [可自由调整的部分](#-可自由调整的部分)
 - [核心原则与数据边界](#-核心原则与数据边界)
 - [项目结构](#-项目结构)
-- [发布到 GitHub Pages](#-发布到-github-pages)
-- [许可证与待补充内容](#-许可证与待补充内容)
+- [代码使用范围](#-代码使用范围)
 
 ---
 
@@ -127,23 +126,8 @@ Career-meow-desk/
 └── plan-text.test.cjs     # 本地规则测试
 ```
 
-`docs/` 和 `AGENTS.md` 是本机需求与进度资料，已被 `.gitignore` 排除，不属于公开发布内容。
-
 ---
 
-## 🌐 发布到 GitHub Pages
+## 📄 代码使用范围
 
-1. 使用已创建的 [Career-meow-desk 仓库](https://github.com/Kira-ui-0725/Career-meow-desk)。最少提交 `index.html`、`style.css`、`app.js`、`plan-text.js`；建议再加 `favicon.svg`、`.nojekyll`、`assets/screenshots/` 和经过核对的 README。若希望别人下载完整本地版，再添加 `local-app/`、`server/` 与测试文件。
-2. 不要提交 `docs/`、`AGENTS.md`、`.env*`、`.DS_Store`、备份、个人求职数据或本机登录凭证。即使 `.gitignore` 排除了文件，手动上传或已有提交历史仍需另行检查。
-3. 推送到 `main` 后，在仓库 **Settings → Pages → Deploy from a branch** 中选择 `main` 和 `/ (root)`。部署后用实际网址检查电脑与手机页面。[GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)
-
-公开仓库中的源码和说明任何人都能阅读；GitHub Pages 只发布静态网页，不运行 `local-app/` 或 `server/`。如果只发布最少的静态文件，请从公开 README 中删去指向未发布目录的链接。
-
----
-
-## 📄 许可证与待补充内容
-
-目前按建仓时的选择**不添加许可证**，因此这里没有沿用参考项目的使用限制。如希望明确允许他人复用代码，可以之后再选许可证。其他待补充内容：
-
-- 若决定开放代码复用，新增 `LICENSE` 文件后再添加许可证徽章。
-- 完成公开网址上的桌面与手机实际操作检查；若提供 AI 功能，再单独验证真实授权或模型请求。
+公开网页可直接访问和使用。本仓库目前未提供源码、文档与图像的复用许可证；如需将这些内容用于其他项目，请先联系仓库作者取得授权。
