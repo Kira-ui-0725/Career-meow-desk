@@ -6,7 +6,7 @@ test("AI draft endpoint checks access and returns validated tasks", async () => 
   let providerRequest;
   const server = createAppServer({ ALLOWED_ORIGIN: "http://localhost:4173", APP_ACCESS_CODE: "private-code", AI_API_KEY: "test-provider-key", AI_MODEL: "test-model", AI_BASE_URL: "http://localhost:9999/v1" }, async (url, options) => {
     providerRequest = { url: String(url), options };
-    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ items: [{ title: "学习 AI 产品课程", duration: 120, category: "其他", estimated: false }, { title: "慢跑", duration: 60, category: "运动", estimated: false }], notes: ["面试时间以已有记录为准"] }) } }] }), { status: 200 });
+    return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ items: [{ title: "学习一门课程", duration: 120, category: "其他", estimated: false }, { title: "慢跑", duration: 60, category: "运动", estimated: false }], notes: ["面试时间以已有记录为准"] }) } }] }), { status: 200 });
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const url = `http://127.0.0.1:${server.address().port}/api/plan-draft`;

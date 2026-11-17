@@ -6,7 +6,7 @@
   const SIDEBAR_NOTE_KEY = "job-search-planner-sidebar-note";
   const HERO_COPY_KEY = "job-search-planner-hero-copy";
   const PLANNER_UI_KEY = "job-search-planner-ui";
-  const tracks = ["AI 产品经理", "商业化产品经理", "GTM", "其他"];
+  const employmentTypes = ["正式", "日常实习", "转正实习", "其他"];
   const cities = ["上海", "广州", "深圳", "北京", "杭州", "南京", "其他"];
   const statuses = ["收藏", "待投递", "已投递", "笔试中", "面试中", "已结束"];
   const categories = ["投递", "学习", "笔面准备", "运动", "休息", "其他"];
@@ -32,11 +32,11 @@
   function load() {
     try {
       const raw = localStorage.getItem(KEY);
-      if (!raw) return { version: 1, jobs: [], events: [], blocks: [], tasks: [], dismissed: [], categories: [] };
+      if (!raw) return { version: 1, jobs: [], events: [], blocks: [], tasks: [], dismissed: [], categories: [], tracks: [] };
       return normalize(JSON.parse(raw));
     } catch {
       setTimeout(() => toast("本机数据读取失败；请检查浏览器存储。"), 0);
-      return { version: 1, jobs: [], events: [], blocks: [], tasks: [], dismissed: [], categories: [] };
+      return { version: 1, jobs: [], events: [], blocks: [], tasks: [], dismissed: [], categories: [], tracks: [] };
     }
   }
 
@@ -44,7 +44,7 @@
     if (!input || input.version !== 1 || !Array.isArray(input.jobs) || !Array.isArray(input.events) || !Array.isArray(input.blocks)) throw new Error("文件格式不符合本项目的数据格式");
     if (input.jobs.length + input.events.length + input.blocks.length + (Array.isArray(input.tasks) ? input.tasks.length : 0) > 5000) throw new Error("记录过多，无法导入");
     const pick = (item, keys) => Object.fromEntries(keys.map((key) => [key, cleanText(item?.[key], ["jdText", "resumeNotes", "prepNotes", "recapNotes"].includes(key) ? 8000 : 500)]));
-    const jobs = input.jobs.map((j) => ({ ...pick(j, ["id", "company", "title", "track", "city", "status", "url", "deadlineDate", "deadlineTime", "appliedDate", "conversion", "nextAction", "nextDate", "notes", "createdAt"]), deadlineReminder: Number(j?.deadlineReminder) || 0 }));
+    const jobs = input.jobs.map((j) => ({ ...pick(j, ["id", "company", "title", "track", "city", "status", "url", "deadlineDate", "deadlineTime", "appliedDate", "nextAction", "nextDate", "notes", "createdAt"]), employmentType: employmentTypes.includes(j?.employmentType) ? j.employmentType : "其他", legacyConversion: cleanText(j?.legacyConversion || j?.conversion, 30), deadlineReminder: Number(j?.deadlineReminder) || 0 }));
     const events = input.events.map((e) => ({ ...pick(e, ["id", "jobId", "kind", "title", "date", "time", "endTime", "link", "place", "notes", "jdText", "resumeNotes", "prepNotes", "recapNotes", "createdAt"]), reminderMinutes: Number(e?.reminderMinutes) || 0, done: Boolean(e?.done), important: Boolean(e?.important) }));
     const blocks = input.blocks.map((b) => ({ ...pick(b, ["id", "date", "start", "end", "category", "title", "createdAt"]), state: ["open", "done", "skipped"].includes(b?.state) ? b.state : "open", syncToToday: Boolean(b?.syncToToday) })).map((b) => ({ ...b, category: b.category === "项目复盘" ? "学习" : b.category || "其他" }));
     const tasks = (Array.isArray(input.tasks) ? input.tasks : []).map((t) => ({ ...pick(t, ["id", "title", "date", "jobId", "createdAt"]), done: Boolean(t?.done), followup: Boolean(t?.followup) }));
@@ -54,7 +54,9 @@
     if (jobs.some((j) => !j.id || !j.company || !j.title || !validDate(j.deadlineDate) || !validDate(j.appliedDate) || !validDate(j.nextDate) || !validTime(j.deadlineTime)) || events.some((e) => !e.id || !e.title || !validDate(e.date) || !validTime(e.time) || !validTime(e.endTime)) || blocks.some((b) => !b.id || !b.title || !validDate(b.date) || !validTime(b.start) || !validBlockEnd(b.end)) || tasks.some((t) => !t.id || !t.title || !validDate(t.date))) throw new Error("文件中有缺失或无效的日期、时间与必填项");
     const dismissed = Array.isArray(input.dismissed) ? input.dismissed.map((x) => cleanText(x, 100)).slice(0, 10000) : [];
     const custom = [...(Array.isArray(input.categories) ? input.categories : []), ...blocks.map((b) => b.category)].map((name) => cleanText(name, 20).trim()).filter((name) => name && name !== "项目复盘" && !categories.includes(name));
-    return { version: 1, jobs, events, blocks, tasks, dismissed, categories: [...new Set(custom)].slice(0, 50) };
+    const savedTracks = Array.isArray(input.tracks) ? input.tracks : jobs.map((job) => job.track);
+    const tracks = [...new Set(savedTracks.map((name) => cleanText(name, 40).trim()).filter((name) => name && name !== "其他"))].slice(0, 50);
+    return { version: 1, jobs, events, blocks, tasks, dismissed, categories: [...new Set(custom)].slice(0, 50), tracks };
   }
 
   let state = load();
@@ -69,8 +71,18 @@
   let sidebarNote = null;
   let heroCopy = null;
   let toastTimer;
+  let editingTrack = "";
   const seenReminders = new Set();
   const allCategories = () => [...categories, ...state.categories];
+  const allTracks = () => ["其他", ...state.tracks];
+
+  function renderTrackEditor(selected) {
+    const select = $('#dialog-fields select[name="track"]');
+    if (!select) return;
+    const value = selected ?? select.value;
+    select.innerHTML = options(allTracks(), allTracks().includes(value) ? value : "其他");
+    $("#custom-track-list").innerHTML = state.tracks.map((name) => `<span class="category-tag">${esc(name)}<button type="button" data-edit-track="${esc(name)}" aria-label="修改岗位方向${esc(name)}">编辑</button><button type="button" data-delete-track="${esc(name)}" aria-label="删除岗位方向${esc(name)}">×</button></span>`).join("");
+  }
 
   function renderCategoryEditor(selected) {
     const select = $('#dialog-fields select[name="category"]');
@@ -183,7 +195,7 @@
     const jobs = state.jobs.filter((job) => (filter === "all" || job.status === filter) && `${job.company} ${job.title}`.toLowerCase().includes(query)).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     $("#job-list").innerHTML = jobs.length ? jobs.map((job) => {
       const related = state.events.filter((event) => event.jobId === job.id).length;
-      return `<article class="record"><div class="record-top"><div><h2 class="record-title">${esc(job.company)} · ${esc(job.title)}</h2><div class="record-sub">${esc(job.track)} · ${esc(job.city)}</div></div><div class="record-actions"><button class="small-btn" data-action="edit-job" data-id="${esc(job.id)}" type="button">编辑</button><button class="small-btn danger" data-action="delete-job" data-id="${esc(job.id)}" type="button">删除</button></div></div><div class="record-meta"><span class="chip">${esc(job.status)}</span><span class="chip ${job.conversion === "明确写明" ? "warm" : "gray"}">转正：${esc(job.conversion || "未提及")}</span><span class="chip gray">${related} 个事件</span></div><div class="record-detail"><span>投递：${job.appliedDate ? esc(dateLabel(job.appliedDate)) : "未记录"}</span><span>截止：${job.deadlineDate ? esc(timeLabel(job.deadlineDate, job.deadlineTime)) : "未记录"}</span><span>下一步：${esc(job.nextAction || "未设置")}${job.nextDate ? ` · ${esc(dateLabel(job.nextDate))}` : ""}</span><span>${urlLink(job.url, "查看岗位链接")}</span>${job.notes ? `<span>备注：${esc(job.notes)}</span>` : ""}</div></article>`;
+      return `<article class="record"><div class="record-top"><div><h2 class="record-title">${esc(job.company)} · ${esc(job.title)}</h2><div class="record-sub">${esc(job.track || "其他")} · ${esc(job.city)}</div></div><div class="record-actions"><button class="small-btn" data-action="edit-job" data-id="${esc(job.id)}" type="button">编辑</button><button class="small-btn danger" data-action="delete-job" data-id="${esc(job.id)}" type="button">删除</button></div></div><div class="record-meta"><span class="chip">${esc(job.status)}</span><span class="chip gray">类型：${esc(job.employmentType || "其他")}</span><span class="chip gray">${related} 个事件</span></div><div class="record-detail"><span>投递：${job.appliedDate ? esc(dateLabel(job.appliedDate)) : "未记录"}</span><span>截止：${job.deadlineDate ? esc(timeLabel(job.deadlineDate, job.deadlineTime)) : "未记录"}</span><span>下一步：${esc(job.nextAction || "未设置")}${job.nextDate ? ` · ${esc(dateLabel(job.nextDate))}` : ""}</span><span>${urlLink(job.url, "查看岗位链接")}</span>${job.notes ? `<span>备注：${esc(job.notes)}</span>` : ""}</div></article>`;
     }).join("") : empty("还没有符合条件的岗位", "新增岗位，或调整搜索与筛选条件。");
   }
 
@@ -327,13 +339,17 @@
   function openEditor(type, id = "") {
     const followupDefault = type === "followup";
     if (followupDefault) type = "task";
-    editorType = type; editorId = id;
+    editorType = type; editorId = id; editingTrack = "";
     const item = id ? state[`${type === "job" ? "jobs" : type === "event" ? "events" : type === "task" ? "tasks" : "blocks"}`].find((x) => x.id === id) : null;
     $("#dialog-kicker").textContent = id ? "EDIT ENTRY" : "NEW ENTRY";
     $("#dialog-title").textContent = `${id ? "编辑" : "新增"}${type === "job" ? "岗位" : type === "event" ? "笔试面试" : type === "task" ? "待办" : "时间安排"}`;
     let html = "";
     if (type === "job") {
-      html = field("company", "公司 *", "text", item?.company, 'required maxlength="80"') + field("title", "岗位名称 *", "text", item?.title, 'required maxlength="80"') + selectField("track", "岗位方向", tracks, item?.track || tracks[0]) + selectField("city", "城市", cities, item?.city || cities[0]) + selectField("status", "当前进度", statuses, item?.status || "待投递") + selectField("conversion", "转正机会", ["未提及", "待确认", "明确写明"], item?.conversion || "未提及") + field("url", "岗位链接", "url", item?.url, 'placeholder="https://…"', true) + field("deadlineDate", "投递截止日期", "date", item?.deadlineDate) + field("deadlineTime", "截止时间（未知可留空）", "time", item?.deadlineTime) + selectField("deadlineReminder", "截止提前提醒", [["0", "到时"], ["60", "提前 1 小时"], ["1440", "提前 1 天"]].map(([v, label]) => ({ v, label })), String(item?.deadlineReminder ?? 1440)) + field("appliedDate", "投递日期", "date", item?.appliedDate) + field("nextAction", "下一步动作", "text", item?.nextAction, 'maxlength="100"') + field("nextDate", "下一步日期", "date", item?.nextDate) + textArea("notes", "备注", item?.notes);
+      html = field("company", "公司 *", "text", item?.company, 'required maxlength="80"') + field("title", "岗位名称 *", "text", item?.title, 'required maxlength="80"') + selectField("track", "岗位方向", allTracks(), item?.track || "其他")
+        + `<div class="category-editor field full"><span>自定义岗位方向</span><div class="category-editor-add"><input id="new-track-name" type="text" maxlength="40" placeholder="输入岗位方向" aria-label="岗位方向名称"><button class="btn btn-secondary" id="add-track" type="button">＋ 添加方向</button></div><div id="custom-track-list" class="custom-category-list"></div></div>`
+        + selectField("city", "城市", cities, item?.city || cities[0]) + selectField("status", "当前进度", statuses, item?.status || "待投递") + selectField("employmentType", "类型", employmentTypes, item?.employmentType || "其他")
+        + (item?.legacyConversion ? `<p class="field-note">旧记录的转正机会为“${esc(item.legacyConversion)}”；无法据此确定岗位类型，请自行选择。</p>` : "")
+        + field("url", "岗位链接", "url", item?.url, 'placeholder="https://…"', true) + field("deadlineDate", "投递截止日期", "date", item?.deadlineDate) + field("deadlineTime", "截止时间（未知可留空）", "time", item?.deadlineTime) + selectField("deadlineReminder", "截止提前提醒", [["0", "到时"], ["60", "提前 1 小时"], ["1440", "提前 1 天"]].map(([v, label]) => ({ v, label })), String(item?.deadlineReminder ?? 1440)) + field("appliedDate", "投递日期", "date", item?.appliedDate) + field("nextAction", "下一步动作", "text", item?.nextAction, 'maxlength="100"') + field("nextDate", "下一步日期", "date", item?.nextDate) + textArea("notes", "备注", item?.notes);
     } else if (type === "event") {
       const jobOptions = `<option value="">不关联岗位</option>${state.jobs.map((job) => `<option value="${esc(job.id)}" ${item?.jobId === job.id ? "selected" : ""}>${esc(job.company)} · ${esc(job.title)}</option>`).join("")}`;
       html = `<label class="field full">关联岗位<select name="jobId">${jobOptions}</select></label>`
@@ -367,6 +383,7 @@
     }
     $("#dialog-fields").innerHTML = html;
     if (type === "block") renderCategoryEditor();
+    if (type === "job") renderTrackEditor(item?.track || "其他");
     $("#editor").showModal();
     $("#dialog-fields input:not([type=date]):not([type=time]), #dialog-fields select").focus();
   }
@@ -379,7 +396,7 @@
     let record;
     if (editorType === "job") {
       if (data.deadlineTime && !data.deadlineDate) { toast("请先填写投递截止日期。"); return; }
-      record = { id, createdAt, company: data.company.trim(), title: data.title.trim(), track: data.track, city: data.city, status: data.status, conversion: data.conversion, url: data.url.trim(), deadlineDate: data.deadlineDate, deadlineTime: data.deadlineTime, deadlineReminder: Number(data.deadlineReminder), appliedDate: data.appliedDate, nextAction: data.nextAction.trim(), nextDate: data.nextDate, notes: data.notes.trim() };
+      record = { id, createdAt, company: data.company.trim(), title: data.title.trim(), track: allTracks().includes(data.track) ? data.track : "其他", city: data.city, status: data.status, employmentType: employmentTypes.includes(data.employmentType) ? data.employmentType : "其他", url: data.url.trim(), deadlineDate: data.deadlineDate, deadlineTime: data.deadlineTime, deadlineReminder: Number(data.deadlineReminder), appliedDate: data.appliedDate, nextAction: data.nextAction.trim(), nextDate: data.nextDate, notes: data.notes.trim() };
     } else if (editorType === "event") {
       if (data.time && !data.date) { toast("填写开始时间时，也请填写日期。"); return; }
       if (data.endTime && !data.time) { toast("请先填写开始时间，再填写结束时间。"); return; }
@@ -736,6 +753,55 @@
     toast("侧栏文字已更新；点击右上角保存到本地。");
   });
   $("#dialog-fields").addEventListener("click", (event) => {
+    if (event.target.closest("#add-track")) {
+      const input = $("#new-track-name");
+      const name = input.value.trim();
+      if (!name) { toast("请输入岗位方向名称。"); return; }
+      if (name.length > 40) { toast("岗位方向最多 40 个字。"); return; }
+      if (allTracks().includes(name) && name !== editingTrack) { toast("这个岗位方向已存在。"); return; }
+      const selected = $('#dialog-fields select[name="track"]').value;
+      if (editingTrack) {
+        const old = editingTrack;
+        state.tracks[state.tracks.indexOf(old)] = name;
+        state.jobs.filter((job) => job.track === old).forEach((job) => { job.track = name; });
+        editingTrack = "";
+        input.value = "";
+        $("#add-track").textContent = "＋ 添加方向";
+        save();
+        renderTrackEditor(selected === old ? name : selected);
+        toast(`已修改岗位方向为“${name}”。`);
+      } else {
+        if (state.tracks.length >= 50) { toast("最多添加 50 个岗位方向。"); return; }
+        state.tracks.push(name);
+        input.value = "";
+        save();
+        renderTrackEditor(name);
+        toast(`已添加岗位方向“${name}”。`);
+      }
+      return;
+    }
+    const editTrack = event.target.closest("[data-edit-track]");
+    if (editTrack) {
+      editingTrack = editTrack.dataset.editTrack;
+      $("#new-track-name").value = editingTrack;
+      $("#add-track").textContent = "保存修改";
+      $("#new-track-name").focus();
+      return;
+    }
+    const deleteTrack = event.target.closest("[data-delete-track]");
+    if (deleteTrack) {
+      const name = deleteTrack.dataset.deleteTrack;
+      const affected = state.jobs.filter((job) => job.track === name);
+      if (affected.length && !confirm(`删除“${name}”后，${affected.length} 个岗位的方向会改为“其他”。确定删除吗？`)) return;
+      const selected = $('#dialog-fields select[name="track"]').value;
+      state.tracks = state.tracks.filter((track) => track !== name);
+      affected.forEach((job) => { job.track = "其他"; });
+      if (editingTrack === name) { editingTrack = ""; $("#new-track-name").value = ""; $("#add-track").textContent = "＋ 添加方向"; }
+      save();
+      renderTrackEditor(selected === name ? "其他" : selected);
+      toast(affected.length ? `已删除“${name}”，${affected.length} 个岗位改为“其他”。` : `已删除岗位方向“${name}”。`);
+      return;
+    }
     if (event.target.closest("#add-category")) {
       const input = $("#new-category-name");
       const name = input.value.trim();
@@ -764,7 +830,10 @@
     if (planDraft) renderPlanDraft();
     toast(affectedBlocks.length ? `已删除“${name}”，${affectedBlocks.length} 项原有日程改为“其他”。` : `已删除分类“${name}”。`);
   });
-  $("#dialog-fields").addEventListener("keydown", (event) => { if (event.target.id === "new-category-name" && event.key === "Enter") { event.preventDefault(); $("#add-category").click(); } });
+  $("#dialog-fields").addEventListener("keydown", (event) => {
+    if (event.target.id === "new-category-name" && event.key === "Enter") { event.preventDefault(); $("#add-category").click(); }
+    if (event.target.id === "new-track-name" && event.key === "Enter") { event.preventDefault(); $("#add-track").click(); }
+  });
   $("#dialog-fields").addEventListener("change", (event) => {
     if (event.target.name !== "endAtMidnight") return;
     const endInput = $("#dialog-fields input[name=end]");

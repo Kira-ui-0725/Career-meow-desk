@@ -3,8 +3,8 @@ const assert = require("node:assert/strict");
 const { parse, autoPlace, reflowAt } = require("./plan-text.js");
 
 test("splits the user's sample into editable tasks and reads Chinese durations", () => {
-  const items = parse("投递简历，学习一下AI产品课程（两小时），完成当前进度的面试，慢跑1小时。英语学习一小时。");
-  assert.deepEqual(items.map((item) => item.title), ["投递简历", "学习一下AI产品课程", "完成当前进度的面试", "慢跑", "英语学习"]);
+  const items = parse("投递简历，学习一门课程（两小时），完成当前进度的面试，慢跑1小时。英语学习一小时。");
+  assert.deepEqual(items.map((item) => item.title), ["投递简历", "学习一门课程", "完成当前进度的面试", "慢跑", "英语学习"]);
   assert.deepEqual(items.map((item) => item.duration), [45, 120, 45, 60, 60]);
   assert.equal(items[1].category, "学习");
   assert.equal(items[4].category, "学习");
